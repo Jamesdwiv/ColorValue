@@ -239,7 +239,7 @@ function hslToRgb(h, s, l) {
  * @param {number} b
  * @returns {{h: number, s: number, l: number}}
  */
- rgbToHsl(r, g, b) {
+ function rgbToHsl(r, g, b) {
   r = clamp01(r / 255);
   g = clamp01(g / 255);
   b = clamp01(b / 255);
