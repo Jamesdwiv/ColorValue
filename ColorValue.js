@@ -172,3 +172,101 @@ class ColorValue {
     return { h, s, l, a: this.a };
   }
 }
+
+
+//utilities
+/**
+ * Clamp a number to the [0, 1] range.
+ * @param {number} value
+ * @returns {number}
+ */
+function clamp01(value) {
+  return Math.min(1, Math.max(0, value));
+}
+
+/**
+ * Normalize alpha input to a float between 0 and 1.
+ * Accepts numbers or strings; defaults to 1 if invalid.
+ * @param {number|string} alpha
+ * @returns {number}
+ */
+function normalizeAlpha(alpha) {
+  if (typeof alpha === 'string') {
+    alpha = parseFloat(alpha);
+  }
+  if (isNaN(alpha)) return 1;
+  return clamp01(alpha);
+}
+
+/**
+ * Convert HSL to RGB.
+ * Hue in degrees [0–360), Saturation and Lightness in percent [0–100].
+ * Returns RGB values in [0–255].
+ * @param {number} h - Hue (degrees)
+ * @param {number} s - Saturation (%)
+ * @param {number} l - Lightness (%)
+ * @returns {{r: number, g: number, b: number}}
+ */
+function hslToRgb(h, s, l) {
+  h = ((h % 360) + 360) % 360;
+  s = clamp01(s / 100);
+  l = clamp01(l / 100);
+
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+
+  let r = 0, g = 0, b = 0;
+  if (h < 60)      [r, g, b] = [c, x, 0];
+  else if (h < 120)[r, g, b] = [x, c, 0];
+  else if (h < 180)[r, g, b] = [0, c, x];
+  else if (h < 240)[r, g, b] = [0, x, c];
+  else if (h < 300)[r, g, b] = [x, 0, c];
+  else             [r, g, b] = [c, 0, x];
+
+  return {
+    r: Math.round((r + m) * 255),
+    g: Math.round((g + m) * 255),
+    b: Math.round((b + m) * 255)
+  };
+}
+
+/**
+ * Convert RGB to HSL.
+ * RGB values in [0–255]. Returns HSL with Hue in degrees, Saturation and Lightness in percent.
+ * @param {number} r
+ * @param {number} g
+ * @param {number} b
+ * @returns {{h: number, s: number, l: number}}
+ */
+ rgbToHsl(r, g, b) {
+  r = clamp01(r / 255);
+  g = clamp01(g / 255);
+  b = clamp01(b / 255);
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let h = 0;
+  if (delta !== 0) {
+    if (max === r) {
+      h = ((g - b) / delta) % 6;
+    } else if (max === g) {
+      h = ((b - r) / delta) + 2;
+    } else {
+      h = ((r - g) / delta) + 4;
+    }
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  const l = (max + min) / 2;
+  const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+
+  return {
+    h: Math.round(h),
+    s: Math.round(s * 100),
+    l: Math.round(l * 100)
+  };
+}  
